@@ -62,11 +62,14 @@ class RiderAttack(pygame.sprite.Sprite):
             return pygame.Rect(self.rect.right - x_offset,self.rect.top + y_offset,width,height)
         
     def get_body_hitbox(self):
-        width = 40
-        height = 70
+        width = 26
+        height = 45
+
         x = self.rect.centerx - width // 2
         y = self.rect.bottom - height
+
         return pygame.Rect(x, y, width, height)
+
 
 
 
