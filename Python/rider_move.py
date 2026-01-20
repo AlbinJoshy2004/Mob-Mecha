@@ -3,8 +3,8 @@ import pygame
 class RiderMove(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False, vel_y=0, on_ground=True):
         super().__init__()
-        self.health = 5
-        self.max_health = 5
+        self.health = 100
+        self.max_health = 100
         self.on_ground = on_ground
         self.vel_y = vel_y
         self.state = "run"

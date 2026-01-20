@@ -3,8 +3,8 @@ import pygame
 class CyborgEnemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.health = 5
-        self.max_health = 5
+        self.health = 150
+        self.max_health = 150
         self.sprite_sheet = pygame.image.load("python/Elements/Cyborg_idle.png").convert_alpha()
         self.frame_width = 48
         self.frame_height = 48
@@ -41,5 +41,11 @@ class CyborgEnemy(pygame.sprite.Sprite):
         self.image = self.frames[self.current_frame]
     
     def get_hitbox(self):
-        return self.rect.inflate(-80, -80)
+        width = 40
+        height = 70
+        x = self.rect.centerx - width // 2
+        y = self.rect.bottom - height
+        return pygame.Rect(x, y, width, height)
+
+
 
