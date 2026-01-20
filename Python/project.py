@@ -8,6 +8,11 @@ from rider_run_attack import RiderRunAttack
 from RiderSuperAttack import RiderSuperAttack
 
 pygame.init()
+pygame.mixer.init()
+# SOUND EFFECTS
+PUNCH_SFX = pygame.mixer.Sound("Python/BackgroundMusic/Rider_punch.wav")
+PUNCH_SFX.set_volume(1.0)
+
 screen = pygame.display.set_mode((800, 400))
 pygame.display.set_caption("MOB MECHA")
 clock = pygame.time.Clock()
@@ -24,6 +29,18 @@ all_sprites.add(cyborg)
 rider_xp = 0
 rider_xp_max = 100
 super_ready = False
+
+# GAME STATE
+game_state = "controls"   # "controls" or "game"
+
+TUTORIAL_BGM = "Python/BackgroundMusic/cyberpunk.mp3"
+GAME_BGM="Python/BackgroundMusic/cyberpunk_main.mp3"
+
+pygame.mixer.music.load(TUTORIAL_BGM)
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.play(-1)  # loop continuously
+
+
 
 
 def replace_rider(new_rider):
@@ -51,46 +68,84 @@ def draw_xp_bar(surface, x, y, width, height, current, maximum):
     pygame.draw.rect(surface, color, (x, y, width * ratio, height))
 
 
+def draw_controls_screen(surface):
+    surface.fill((0, 0, 0))
+
+    font_title = pygame.font.SysFont("arial", 36, bold=True)
+    font_text = pygame.font.SysFont("arial", 22)
+
+    title = font_title.render("CONTROLS", True, (0, 255, 0))
+    surface.blit(title, (320, 40))
+
+    controls = [
+        "A / D        - Move Left / Right",
+        "SPACE        - Jump",
+        "Left Click   - Attack",
+        "Left Click (while moving) - Run Attack",
+        "Right Click  - Super Attack (XP full)",
+        "",
+        "Press ENTER to Start"
+    ]
+
+    y = 120
+    for line in controls:
+        text = font_text.render(line, True, (0, 255, 0))
+        surface.blit(text, (220, y))
+        y += 35
+
+
 while True:
     keys = pygame.key.get_pressed()
 
+    # ================= EVENT LOOP =================
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
 
+        # ENTER → START GAME
+        if game_state == "controls":
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                print("GAME BGM STARTED")
+
+                game_state = "game"
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(GAME_BGM)
+                pygame.mixer.music.set_volume(0.6)
+                pygame.mixer.music.play(-1)
+
+        # BLOCK INPUT WHILE ON CONTROLS SCREEN
+        if game_state != "game":
+            continue
+
         # LEFT CLICK – NORMAL ATTACKS
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if isinstance(rider, RiderMove) and not isinstance(rider, RiderRunAttack):
                 rider = replace_rider(
-                    RiderRunAttack(
-                        rider.rect.x,
-                        rider.rect.y,
-                        facing_left=rider.facing_left
-                    )
+                    RiderRunAttack(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
                 )
             elif rider.on_ground and not isinstance(rider, RiderAttack):
                 rider = replace_rider(
-                    RiderAttack(
-                        rider.rect.x,
-                        rider.rect.y,
-                        facing_left=rider.facing_left
-                    )
+                    RiderAttack(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
                 )
 
         # RIGHT CLICK – SUPER ATTACK
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             if super_ready and not isinstance(rider, RiderSuperAttack):
                 rider = replace_rider(
-                    RiderSuperAttack(
-                        rider.rect.x,
-                        rider.rect.y,
-                        facing_left=rider.facing_left
-                    )
+                    RiderSuperAttack(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
                 )
                 rider_xp = 0
                 super_ready = False
 
+    # ================= CONTROLS SCREEN =================
+    if game_state == "controls":
+        draw_controls_screen(screen)
+        pygame.display.update()
+        clock.tick(50)
+        continue
+
+    # ================= GAME LOGIC =================
     old_x, old_y = rider.rect.x, rider.rect.y
     facing_left = getattr(rider, "facing_left", False)
     vel_y = getattr(rider, "vel_y", 0)
@@ -114,15 +169,13 @@ while True:
         )
 
     all_sprites.update(keys)
+    cyborg.update_ai(rider)
+    
+
 
     # CONTACT DAMAGE LOGIC
     rider_body = rider.get_body_hitbox() if hasattr(rider, "get_body_hitbox") else None
     cyborg_body = cyborg.get_hitbox()
-
-    # DEBUG HITBOXES (REMOVE LATER)
-    if rider_body:
-        pygame.draw.rect(screen, (0, 255, 0), rider_body, 1)
-    pygame.draw.rect(screen, (255, 0, 0), cyborg_body, 1)
 
     if (
         isinstance(rider, (RiderAttack, RiderRunAttack, RiderSuperAttack))
@@ -133,6 +186,8 @@ while True:
     ):
         cyborg.health -= rider.damage
         rider.hit_done = True
+        PUNCH_SFX.play()
+
 
         if not super_ready:
             rider_xp += 10
@@ -142,23 +197,15 @@ while True:
 
     # STATE RETURNS
     if isinstance(rider, RiderJump) and rider.on_ground:
-        rider = replace_rider(
-            RiderIdle(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
-        )
+        rider = replace_rider(RiderIdle(rider.rect.x, rider.rect.y, facing_left=rider.facing_left))
 
     if isinstance(rider, (RiderRunAttack, RiderAttack, RiderSuperAttack)) and rider.attack_finished:
         rider = replace_rider(
-            RiderIdle(
-                rider.rect.x,
-                rider.rect.y,
-                facing_left=rider.facing_left,
-                vel_y=0,
-                on_ground=True
-            )
+            RiderIdle(rider.rect.x, rider.rect.y, facing_left=rider.facing_left, vel_y=0, on_ground=True)
         )
 
-    # DRAW
-    screen.fill((0, 0, 0))
+    # ================= DRAW GAME =================
+    screen.fill((10, 15, 40))
     screen.blit(resized_base, (0, 0))
     all_sprites.draw(screen)
 
