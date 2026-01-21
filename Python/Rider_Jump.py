@@ -3,8 +3,8 @@ import pygame
 class RiderJump(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False, vel_y=-15, on_ground=False):
         super().__init__()
-        self.health = 100
-        self.max_health = 100
+        self.health = 120
+        self.max_health = 120
 
 
         self.facing_left = facing_left

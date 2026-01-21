@@ -3,10 +3,10 @@ import pygame
 class RiderIdle(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False, vel_y=0, on_ground=True):
         super().__init__()
-        self.health = 100
-        self.max_health = 100
+        self.health = 120
+        self.max_health = 120
         # shared variables
-        self.on_ground = on_ground
+        self.on_ground = True
         self.vel_y = vel_y
         self.state = "idle"
         self.speed = 5
@@ -41,11 +41,19 @@ class RiderIdle(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
 
     def get_body_hitbox(self):
-        width = 40
-        height = 70
+        # Rider cannot be hit in air
+        if not self.on_ground:
+            return None
+
+        # Grounded hitbox (legs + torso only)
+        width = 26
+        height = 40
+
         x = self.rect.centerx - width // 2
         y = self.rect.bottom - height
+
         return pygame.Rect(x, y, width, height)
+
 
 
     def update(self, keys=None):

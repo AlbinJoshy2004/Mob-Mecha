@@ -3,8 +3,8 @@ import pygame
 class RiderAttack(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False):
         super().__init__()
-        self.health = 100
-        self.max_health = 100
+        self.health = 120
+        self.max_health = 120
         self.active_start = 2
         self.active_end = 3
 
@@ -14,7 +14,7 @@ class RiderAttack(pygame.sprite.Sprite):
         self.on_ground = True
         self.vel_y = 0
         self.attack_finished = False
-        self.damage = 5
+        self.damage = 8
         self.hit_done = False
 
         self.sprite_sheet = pygame.image.load(
@@ -62,15 +62,18 @@ class RiderAttack(pygame.sprite.Sprite):
             return pygame.Rect(self.rect.right - x_offset,self.rect.top + y_offset,width,height)
         
     def get_body_hitbox(self):
+        # Rider cannot be hit in air
+        if not self.on_ground:
+            return None
+
+        # Grounded hitbox (legs + torso only)
         width = 26
-        height = 45
+        height = 40
 
         x = self.rect.centerx - width // 2
         y = self.rect.bottom - height
 
         return pygame.Rect(x, y, width, height)
-
-
 
 
 

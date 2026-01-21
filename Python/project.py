@@ -1,4 +1,5 @@
 import pygame
+
 from rider_ import RiderIdle
 from rider_move import RiderMove
 from Rider_Jump import RiderJump
@@ -10,33 +11,41 @@ from RiderSuperAttack import RiderSuperAttack
 pygame.init()
 pygame.mixer.init()
 
-# SOUND EFFECTS
+# ================= SOUND =================
 PUNCH_SFX = pygame.mixer.Sound("Python/BackgroundMusic/Rider_punch.wav")
 PUNCH_SFX.set_volume(1.0)
 
+CYBORG_SFX = pygame.mixer.Sound("Python/BackgroundMusic/cyborg_punch.wav")
+CYBORG_SFX.set_volume(2.0)
+
+
+# ================= WINDOW =================
 screen = pygame.display.set_mode((800, 400))
 pygame.display.set_caption("MOB MECHA")
 clock = pygame.time.Clock()
 
+# ================= BACKGROUND =================
 base_surface = pygame.image.load("python/Elements/Background.png").convert()
 resized_base = pygame.transform.scale(base_surface, (800, 400))
 
+# ================= ENTITIES =================
 rider = RiderIdle(100, 300)
 rider.health = 100
 rider.max_health = 100
 
-all_sprites = pygame.sprite.Group(rider)
-
 cyborg = CyborgEnemy(500, 300)
+
+all_sprites = pygame.sprite.Group()
+all_sprites.add(rider)
 all_sprites.add(cyborg)
 
-# XP SYSTEM
+# ================= XP =================
 rider_xp = 0
 rider_xp_max = 100
 super_ready = False
 
-# GAME STATE
-game_state = "controls"   # "controls" or "game"
+# ================= GAME STATE =================
+game_state = "controls"
 
 TUTORIAL_BGM = "Python/BackgroundMusic/cyberpunk.mp3"
 GAME_BGM = "Python/BackgroundMusic/cyberpunk_main.mp3"
@@ -45,10 +54,10 @@ pygame.mixer.music.load(TUTORIAL_BGM)
 pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play(-1)
 
-
-# ================= FIXED RIDER REPLACEMENT =================
+# ================= RIDER REPLACEMENT =================
 def replace_rider(new_rider):
-    # 🔒 PRESERVE HEALTH
+    global rider
+
     old_health = rider.health
     old_max_health = rider.max_health
 
@@ -62,52 +71,39 @@ def replace_rider(new_rider):
     new_rider.health = old_health
     new_rider.max_health = old_max_health
 
-    all_sprites.add(new_rider)
-    return new_rider
-# ===========================================================
+    rider = new_rider
+    all_sprites.add(rider)
+    return rider
 
-
+# ================= UI =================
 def draw_health_bar(surface, x, y, width, height, current, maximum):
     ratio = current / maximum
     pygame.draw.rect(surface, (255, 0, 0), (x, y, width, height))
     pygame.draw.rect(surface, (0, 255, 0), (x, y, width * ratio, height))
 
-
 def draw_xp_bar(surface, x, y, width, height, current, maximum):
     ratio = current / maximum
-    color = (0, 180, 255) if current >= maximum else (0, 120, 255)
     pygame.draw.rect(surface, (40, 40, 40), (x, y, width, height))
-    pygame.draw.rect(surface, color, (x, y, width * ratio, height))
-
+    pygame.draw.rect(surface, (0, 120, 255), (x, y, width * ratio, height))
 
 def draw_controls_screen(surface):
     surface.fill((0, 0, 0))
-
-    font_title = pygame.font.SysFont("arial", 36, bold=True)
-    font_text = pygame.font.SysFont("arial", 22)
-
-    title = font_title.render("CONTROLS", True, (0, 255, 0))
-    surface.blit(title, (320, 40))
-
-    controls = [
-        "A / D        - Move Left / Right",
-        "SPACE        - Jump",
-        "Left Click   - Attack",
-        "Left Click (while moving) - Run Attack",
-        "Right Click  - Super Attack (XP full)",
+    font = pygame.font.SysFont("arial", 22)
+    lines = [
+        "A / D  - Move",
+        "SPACE  - Jump",
+        "Left Click  - Attack",
+        "Left Click + Move - Run Attack",
+        "Right Click - Super (XP full)",
         "",
-        "********************",
-        "Press ENTER to Start",
-        "********************"
+        "Press ENTER to Start"
     ]
-
     y = 120
-    for line in controls:
-        text = font_text.render(line, True, (0, 255, 0))
-        surface.blit(text, (220, y))
-        y += 35
+    for l in lines:
+        surface.blit(font.render(l, True, (0, 255, 0)), (260, y))
+        y += 30
 
-
+# ================= MAIN LOOP =================
 while True:
     keys = pygame.key.get_pressed()
 
@@ -121,27 +117,21 @@ while True:
                 game_state = "game"
                 pygame.mixer.music.stop()
                 pygame.mixer.music.load(GAME_BGM)
-                pygame.mixer.music.set_volume(0.6)
                 pygame.mixer.music.play(-1)
 
         if game_state != "game":
             continue
 
+        # ATTACK INPUT
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if isinstance(rider, RiderMove) and not isinstance(rider, RiderRunAttack):
-                rider = replace_rider(
-                    RiderRunAttack(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
-                )
+                rider = replace_rider(RiderRunAttack(rider.rect.x, rider.rect.y, rider.facing_left))
             elif rider.on_ground and not isinstance(rider, RiderAttack):
-                rider = replace_rider(
-                    RiderAttack(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
-                )
+                rider = replace_rider(RiderAttack(rider.rect.x, rider.rect.y, rider.facing_left))
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             if super_ready and not isinstance(rider, RiderSuperAttack):
-                rider = replace_rider(
-                    RiderSuperAttack(rider.rect.x, rider.rect.y, facing_left=rider.facing_left)
-                )
+                rider = replace_rider(RiderSuperAttack(rider.rect.x, rider.rect.y, rider.facing_left))
                 rider_xp = 0
                 super_ready = False
 
@@ -151,33 +141,48 @@ while True:
         clock.tick(50)
         continue
 
-    old_x, old_y = rider.rect.x, rider.rect.y
-    facing_left = getattr(rider, "facing_left", False)
-    vel_y = getattr(rider, "vel_y", 0)
-    on_ground = getattr(rider, "on_ground", True)
+    # ================= RIDER MOVEMENT STATE =================
+    if isinstance(rider, RiderIdle):
+        if keys[pygame.K_a] or keys[pygame.K_d]:
+            rider = replace_rider(
+                RiderMove(
+                    rider.rect.x,
+                    rider.rect.y,
+                    facing_left=keys[pygame.K_a],
+                    vel_y=rider.vel_y,
+                    on_ground=rider.on_ground
+                )
+            )
+        elif keys[pygame.K_SPACE] and rider.on_ground:
+            rider = replace_rider(
+                RiderJump(rider.rect.x, rider.rect.y, rider.facing_left)
+            )
 
-    if keys[pygame.K_SPACE] and on_ground and not isinstance(rider, RiderAttack):
-        rider = replace_rider(
-            RiderJump(old_x, old_y, facing_left=facing_left, vel_y=-12, on_ground=False)
-        )
+    elif isinstance(rider, RiderMove):
+        if not (keys[pygame.K_a] or keys[pygame.K_d]):
+            rider = replace_rider(
+                RiderIdle(rider.rect.x, rider.rect.y, rider.facing_left, 0, True)
+            )
+        elif keys[pygame.K_SPACE] and rider.on_ground:
+            rider = replace_rider(
+                RiderJump(rider.rect.x, rider.rect.y, rider.facing_left)
+            )
 
-    elif (keys[pygame.K_a] or keys[pygame.K_d]) and isinstance(rider, RiderIdle):
-        rider = replace_rider(
-            RiderMove(old_x, old_y, facing_left=facing_left, vel_y=vel_y, on_ground=on_ground)
-        )
+    # ================= ATTACK CLEANUP =================
+    if isinstance(rider, (RiderAttack, RiderRunAttack, RiderSuperAttack)):
+        if getattr(rider, "attack_finished", False):
+            rider = replace_rider(
+                RiderIdle(rider.rect.x, rider.rect.y, rider.facing_left, 0, True)
+            )
 
-    elif not (keys[pygame.K_a] or keys[pygame.K_d]) and isinstance(rider, RiderMove):
-        rider = replace_rider(
-            RiderIdle(old_x, old_y, facing_left=facing_left, vel_y=0, on_ground=True)
-        )
-
-    all_sprites.update(keys)
+    # ================= CYBORG AI =================
     cyborg.update_ai(rider)
 
-    # RIDER → CYBORG DAMAGE
+    # ================= DAMAGE =================
     rider_body = rider.get_body_hitbox() if hasattr(rider, "get_body_hitbox") else None
     cyborg_body = cyborg.get_hitbox()
 
+    # RIDER → CYBORG
     if (
         isinstance(rider, (RiderAttack, RiderRunAttack, RiderSuperAttack))
         and rider_body
@@ -195,27 +200,15 @@ while True:
                 rider_xp = rider_xp_max
                 super_ready = True
 
-    # CYBORG → RIDER DAMAGE (CONTACT ONLY, GROUNDED)
-    if cyborg.state == "attack":
-        if (
-            cyborg.attack_start <= int(cyborg.counter) <= cyborg.attack_end
-            and not cyborg.hit_done
-            and hasattr(rider, "on_ground")
-            and rider.on_ground
-        ):
-            rider_body = rider.get_body_hitbox() if hasattr(rider, "get_body_hitbox") else None
-            if rider_body and cyborg.get_attack_hitbox().colliderect(rider_body):
-                rider.health -= cyborg.damage
-                cyborg.hit_done = True
+    # CYBORG → RIDER
+    if cyborg.state == "attack" and not cyborg.hit_done and rider_body:
+        if cyborg_body.colliderect(rider_body):
+            rider.health -= cyborg.damage
+            cyborg.hit_done = True
+            CYBORG_SFX.play()
 
-
-    if isinstance(rider, RiderJump) and rider.on_ground:
-        rider = replace_rider(RiderIdle(rider.rect.x, rider.rect.y, facing_left=rider.facing_left))
-
-    if isinstance(rider, (RiderRunAttack, RiderAttack, RiderSuperAttack)) and rider.attack_finished:
-        rider = replace_rider(
-            RiderIdle(rider.rect.x, rider.rect.y, facing_left=rider.facing_left, vel_y=0, on_ground=True)
-        )
+    # ================= UPDATE & DRAW =================
+    all_sprites.update(keys)
 
     screen.fill((10, 15, 40))
     screen.blit(resized_base, (0, 0))
