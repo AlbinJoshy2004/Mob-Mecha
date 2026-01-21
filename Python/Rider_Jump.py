@@ -63,7 +63,7 @@ class RiderJump(pygame.sprite.Sprite):
             self.rect.y = ground_y
             self.vel_y = 0
             self.on_ground = True
-            self.state = "idle"
+            
 
         self.counter += self.animation_speed
         if self.counter >= len(self.frames_right):
