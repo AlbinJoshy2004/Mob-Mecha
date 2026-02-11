@@ -1,4 +1,13 @@
 import pygame
+import sys
+import os
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class RiderSuperAttack(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False):
@@ -19,9 +28,9 @@ class RiderSuperAttack(pygame.sprite.Sprite):
         self.active_start = 2
         self.active_end = 6   # longer active window
 
-        self.sprite_sheet = pygame.image.load(
-            "python/Elements/Biker_attack3.png"
-        ).convert_alpha()
+        self.sprite_sheet = pygame.image.load(resource_path(
+            "Elements/Biker_attack3.png"
+        )).convert_alpha()
 
         self.frame_width = 48
         self.frame_height = 48

@@ -1,5 +1,16 @@
 import pygame
 
+import sys
+import os
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 GROUND_Y = 395
 
 
@@ -41,23 +52,23 @@ class CyborgEnemy(pygame.sprite.Sprite):
         self.anim_speed = 0.28
 
         # ===== LOAD SPRITES SAFELY =====
-        self.run_right = self._load_strip("python/Elements/Cyborg_run.png")
+        self.run_right = self._load_strip("Elements/Cyborg_run.png")
         self.run_left = [pygame.transform.flip(f, True, False) for f in self.run_right]
 
-        self.punch_right = self._load_strip("python/Elements/Cyborg_attack2.png")
+        self.punch_right = self._load_strip("Elements/Cyborg_attack2.png")
         self.punch_left = [pygame.transform.flip(f, True, False) for f in self.punch_right]
 
-        self.kick_right = self._load_strip("python/Elements/Cyborg_kick.png")
+        self.kick_right = self._load_strip("Elements/Cyborg_kick.png")
         self.kick_left = [pygame.transform.flip(f, True, False) for f in self.kick_right]
 
-        self.super_right = self._load_strip("python/Elements/Cyborg_attack3.png")
+        self.super_right = self._load_strip("Elements/Cyborg_attack3.png")
         self.super_left = [pygame.transform.flip(f, True, False) for f in self.super_right]
 
         self.image = self.run_right[0]
         self.rect = self.image.get_rect(midbottom=(x, GROUND_Y))
 
     def _load_strip(self, path, frame_width=48):
-        sheet = pygame.image.load(path).convert_alpha()
+        sheet = pygame.image.load(resource_path(path)).convert_alpha()
         frames = []
         count = sheet.get_width() // frame_width
 

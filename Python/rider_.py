@@ -1,4 +1,13 @@
 import pygame
+import sys
+import os
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class RiderIdle(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False, vel_y=0, on_ground=True):
@@ -13,7 +22,7 @@ class RiderIdle(pygame.sprite.Sprite):
         self.facing_left = facing_left
 
         # load sheet
-        self.sprite_sheet = pygame.image.load("python/Elements/Biker_idle.png").convert_alpha()
+        self.sprite_sheet = pygame.image.load(resource_path("Elements/Biker_idle.png")).convert_alpha()
 
         self.frame_width = 48
         self.frame_height = 48

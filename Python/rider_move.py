@@ -1,5 +1,12 @@
 import pygame
-
+import sys
+import os
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 class RiderMove(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False, vel_y=0, on_ground=True):
         super().__init__()
@@ -11,7 +18,7 @@ class RiderMove(pygame.sprite.Sprite):
         self.speed = 8
         self.facing_left = facing_left
 
-        self.sprite_sheet = pygame.image.load("python/Elements/Biker_run.png").convert_alpha()
+        self.sprite_sheet = pygame.image.load(resource_path("Elements/Biker_run.png")).convert_alpha()
         self.frame_width = 48
         self.frame_height = 48
         self.num_frames = 6

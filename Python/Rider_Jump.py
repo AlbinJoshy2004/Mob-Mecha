@@ -1,4 +1,13 @@
 import pygame
+import sys
+import os
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class RiderJump(pygame.sprite.Sprite):
     def __init__(self, x, y, facing_left=False, vel_y=-15, on_ground=False):
@@ -15,7 +24,7 @@ class RiderJump(pygame.sprite.Sprite):
 
         self.air_speed = 10
 
-        self.sprite_sheet = pygame.image.load("python/Elements/Biker_jump.png").convert_alpha()
+        self.sprite_sheet = pygame.image.load(resource_path("Elements/Biker_jump.png")).convert_alpha()
         self.frame_width = 48
         self.frame_height = 48
         self.num_frames = 4
